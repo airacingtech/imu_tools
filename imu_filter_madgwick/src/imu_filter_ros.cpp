@@ -185,6 +185,7 @@ ImuFilterMadgwickRos::ImuFilterMadgwickRos(const rclcpp::NodeOptions &options)
 
     // **** register publishers
     imu_publisher_ = create_publisher<sensor_msgs::msg::Imu>("imu/data", 5);
+    track_publisher_ = create_publisher<std_msgs::msg::Float64>("imu/track", 5);
     if (publish_debug_topics_)
     {
         rpy_filtered_debug_publisher_ =
@@ -201,11 +202,10 @@ ImuFilterMadgwickRos::ImuFilterMadgwickRos(const rclcpp::NodeOptions &options)
     // connection callback.
     const int queue_size = 5;
     rmw_qos_profile_t qos = rmw_qos_profile_sensor_data;
-    imu_subscriber_.reset(new ImuSubscriber(this, "imu/data_raw", qos));
-
+    imu_subscriber_.reset(new ImuSubscriber(this, "/gps_top/imu", qos));
     if (use_mag_)
     {
-        mag_subscriber_.reset(new MagSubscriber(this, "imu/mag", qos));
+        mag_subscriber_.reset(new MagSubscriber(this, "/gps_nav/magnetic", qos));
 
         sync_.reset(new Synchronizer(SyncPolicy(queue_size), *imu_subscriber_,
                                      *mag_subscriber_));
@@ -483,6 +483,13 @@ void ImuFilterMadgwickRos::publishFilteredMsg(
 
         rpy.header = imu_msg_raw->header;
         rpy_filtered_debug_publisher_->publish(rpy);
+
+        double yaw_radians = rpy.vector.z;
+        double track_angle = heading_to_track(yaw_radians);
+        std_msgs::msg::Float64 track_msg;
+        track_msg.data = track_angle;
+        track_publisher_->publish(track_msg);
+
     }
 }
 
@@ -551,6 +558,16 @@ void ImuFilterMadgwickRos::checkTopicsTimerCallback()
         RCLCPP_WARN_STREAM(get_logger(), "Still waiting for data on topic "
                                              << imu_subscriber_->getTopic()
                                              << "...");
+}
+
+double ImuFilterMadgwickRos::heading_to_track(double heading) const
+{
+    // Convert heading angle (radians) to track angle (degrees)
+    double track = (M_PI_2 - heading) * (180.0 / M_PI);  // Convert ROS heading to GPS track convention
+    if (track < 0.0) {
+        track += 360.0;  // Ensure 0-360 degree range
+    }
+    return track;
 }
 
 #include "rclcpp_components/register_node_macro.hpp"

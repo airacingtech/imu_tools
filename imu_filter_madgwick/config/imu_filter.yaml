@@ -1,16 +1,29 @@
 imu_filter:
   ros__parameters:
-    stateless: false
-    use_mag: true
-    publish_tf: true
-    reverse_tf: false
-    fixed_frame: "odom"
-    constant_dt: 0.0
-    publish_debug_topics: false
-    world_frame: "enu"
-    gain: 0.1
-    zeta: 0.0
-    mag_bias_x: 0.0
-    mag_bias_y: 0.0
+    # Core settings
+    stateless: false                    # Use previous state for better filtering
+    use_mag: true                 # Disable magnetometer for racing (magnetic interference)
+    publish_tf: false                   # Publish TF for visualization/debugging
+    reverse_tf: false                   # Standard TF direction
+    
+    # Frame settings
+    fixed_frame: "odom"                 # Reference frame
+    world_frame: "enu"                  # East-North-Up world frame
+    
+    # Timing
+    constant_dt: 0.01                   # 100Hz if your IMU runs at 100Hz, 0.005 for 200Hz
+    
+    # Filter parameters
+    gain: 0.02                         # Lower gain for racing (0.01-0.05 range)
+    zeta: 0.001                         # Small gyro bias drift compensation
+    
+    # Magnetometer bias (not used if use_mag: false)
+    mag_bias_x: 0.275
+    mag_bias_y: 0.325
     mag_bias_z: 0.0
-    orientation_stddev: 0.0
+
+
+    
+    # Output settings
+    orientation_stddev: 0.05            # Realistic uncertainty estimate
+    publish_debug_topics: true          # Useful for tuning

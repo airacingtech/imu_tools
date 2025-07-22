@@ -25,6 +25,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include <std_msgs/msg/float64.hpp>
 
 #include "tf2_ros/transform_broadcaster.h"
 #include <geometry_msgs/msg/vector3_stamped.hpp>
@@ -67,6 +68,7 @@ class ImuFilterMadgwickRos : public imu_filter::BaseNode
 
     rclcpp::Publisher<RpyVectorMsg>::SharedPtr rpy_filtered_debug_publisher_;
     rclcpp::Publisher<RpyVectorMsg>::SharedPtr rpy_raw_debug_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr track_publisher_;
     rclcpp::Publisher<ImuMsg>::SharedPtr imu_publisher_;
     tf2_ros::TransformBroadcaster tf_broadcaster_;
 
@@ -104,7 +106,7 @@ class ImuFilterMadgwickRos : public imu_filter::BaseNode
     // **** member functions
     void publishFilteredMsg(ImuMsg::ConstSharedPtr imu_msg_raw);
     void publishTransform(ImuMsg::ConstSharedPtr imu_msg_raw);
-
+    double heading_to_track(double heading) const;
     void publishRawMsg(const rclcpp::Time& t, float roll, float pitch,
                        float yaw);
 
