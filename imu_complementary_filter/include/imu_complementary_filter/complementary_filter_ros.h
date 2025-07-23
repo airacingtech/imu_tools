@@ -35,6 +35,7 @@
 #define IMU_TOOLS_COMPLEMENTARY_FILTER_ROS_H
 
 #include <sensor_msgs/msg/magnetic_field.hpp>
+#include <std_msgs/msg/float64.hpp>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -76,6 +77,7 @@ class ComplementaryFilterROS : public rclcpp::Node
     rclcpp::Publisher<ImuMsg>::SharedPtr imu_publisher_;
     rclcpp::Publisher<RpyVectorMsg>::SharedPtr rpy_publisher_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr state_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr track_publisher_;
     tf2_ros::TransformBroadcaster tf_broadcaster_;
 
     // Parameters:
@@ -97,6 +99,7 @@ class ComplementaryFilterROS : public rclcpp::Node
     void imuMagCallback(ImuMsg::ConstSharedPtr imu_msg_raw,
                         MagMsg::ConstSharedPtr mav_msg);
     void publish(ImuMsg::ConstSharedPtr imu_msg_raw);
+    double heading_to_track(double heading) const;
 
     tf2::Quaternion hamiltonToTFQuaternion(double q0, double q1, double q2,
                                            double q3) const;

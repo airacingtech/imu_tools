@@ -7,19 +7,19 @@ imu_filter:
     reverse_tf: false                   # Standard TF direction
     
     # Frame settings
-    fixed_frame: "odom"                 # Reference frame
+    fixed_frame: "imu_top"                 # Reference frame
     world_frame: "enu"                  # East-North-Up world frame
     
     # Timing
     constant_dt: 0.01                   # 100Hz if your IMU runs at 100Hz, 0.005 for 200Hz
     
     # Filter parameters
-    gain: 0.02                         # Lower gain for racing (0.01-0.05 range)
-    zeta: 0.001                         # Small gyro bias drift compensation
+    gain: 0.0063482977748                    
+    zeta: 0.00733038285838                 
     
     # Magnetometer bias (not used if use_mag: false)
-    mag_bias_x: 0.275
-    mag_bias_y: 0.325
+    mag_bias_x: -1.0
+    mag_bias_y: 1.6
     mag_bias_z: 0.0
 
 

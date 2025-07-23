@@ -54,6 +54,8 @@ ComplementaryFilterROS::ComplementaryFilterROS()
     // Register publishers:
     // TODO: Check why ros::names::resolve is need here
     imu_publisher_ = this->create_publisher<ImuMsg>("imu/data", queue_size);
+    track_publisher_ = this->create_publisher<std_msgs::msg::Float64>(
+        "imu/track", queue_size);
 
     if (publish_debug_topics_)
     {
@@ -76,15 +78,14 @@ ComplementaryFilterROS::ComplementaryFilterROS()
         rclcpp::QosPolicyKind::History,
         rclcpp::QosPolicyKind::Reliability,
     }};
-
-    imu_subscriber_.reset(new ImuSubscriber(this, "imu/data_raw",
-                                            rmw_qos_profile_default, sub_opts));
+    rclcpp::SensorDataQoS qos;
+    imu_subscriber_.reset(new ImuSubscriber(this, "/gps_top/imu", qos.get_rmw_qos_profile(), sub_opts));
 
     // Register magnetic data subscriber.
     if (use_mag_)
     {
         mag_subscriber_.reset(new MagSubscriber(
-            this, "imu/mag", rmw_qos_profile_default, sub_opts));
+            this, "/gps_nav/magnetic", qos.get_rmw_qos_profile(), sub_opts));
 
         sync_.reset(new Synchronizer(SyncPolicy(queue_size), *imu_subscriber_,
                                      *mag_subscriber_));
@@ -287,7 +288,13 @@ void ComplementaryFilterROS::publish(ImuMsg::ConstSharedPtr imu_msg_raw)
         tf2::Matrix3x3 M;
         M.setRotation(q);
         M.getRPY(rpy.vector.x, rpy.vector.y, rpy.vector.z);
+
         rpy_publisher_->publish(rpy);
+        double yaw_radians = rpy.vector.z;
+        double track_angle = heading_to_track(yaw_radians);
+        std_msgs::msg::Float64 track_msg;
+        track_msg.data = track_angle;
+        track_publisher_->publish(track_msg);
 
         // Publish whether we are in the steady state, when doing bias
         // estimation
@@ -322,5 +329,16 @@ void ComplementaryFilterROS::publish(ImuMsg::ConstSharedPtr imu_msg_raw)
         }
     }
 }
+
+double ComplementaryFilterROS::heading_to_track(double heading) const
+{
+    // Convert heading angle (radians) to track angle (degrees)
+    double track = (M_PI_2 - heading) * (180.0 / M_PI);  // Convert ROS heading to GPS track convention
+    if (track < 0.0) {
+        track += 360.0;  // Ensure 0-360 degree range
+    }
+    return track;
+}
+
 
 }  // namespace imu_tools
